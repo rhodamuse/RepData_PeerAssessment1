@@ -7,19 +7,74 @@ output:
 
 
 ## Loading and preprocessing the data
-
+To load the data you first make sure the working directory has the zip file.The zip file(activity) was unzipped in R. The following code was used:
+```{r}
+#get working directory
+getwd()
+#unzip file
+activity=unzip('activity.zip',list=F)
+proj_data=read.csv('activity.csv',head=T,na.strings="NA")
+attach(proj_data)
+```
 
 
 ## What is mean total number of steps taken per day?
+The total numberof steps per day was first computed.A histogram of the total daily steps was then plotted using the base plotting system.
+```{r fig.width=7,fig.height=6}
+frequency=tapply(steps,date,sum,na.rm=T)
+daily_mean=mean(frequency) #mean of total daily steps
+daily_median=median(frequency)
+hist(frequency,xlab="Total Steps per day",main="Histogram of Daily Steps")
+```
 
+The mean **`r round(daily_mean,2)`** and median was **`r daily_median`**
 
 
 ## What is the average daily activity pattern?
+The average daily activity was as follows.For simplicity, the interval was converted to a factor.
+The r code used was:
+```{r fig.width=7,fig.height=6}
+proj_data$interval=factor(proj_data$interval)
+Average=aggregate(steps~interval,data=proj_data,na.action=na.omit,FUN=mean)
+max=Average[Average$steps==max(Average$steps),]
+with(Average,plot.ts(interval,steps,type='l',main="5 minute interval time series"))
+```
 
-
+The five minute interval with the highest number of steps was **`r max[1]`**
 
 ## Imputing missing values
+The missing values were replaced with mean of the data.
+```{r fig.width=7,fig.height=6}
+library(zoo)
+#fill missing by median interval
+proj_data$steps1=na.aggregate(proj_data$steps,by=proj_data$interval, FUN=median)
+detach(proj_data)
+new_data=proj_data[,2:4]
+#create total per day
+attach(new_data)
+total_steps=tapply(steps1,date,sum)
+hist(total_steps,xlab="Total Steps per day",main="Histogram of Daily Steps")
+complete_mean=mean(total_steps)
+complete_median=median(total_steps)
+```
 
-
+The mean of the new data set is **`r complete_mean`** while the median is **`r complete_median`**.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+The weekday was first extracted.The if statement was then used to generate the factor variable with the levels Weekday and Weekend respectively.
+The code is as follows:
+```{r fig.width=7,fig.height=6}
+#create weekdays
+new_data$date=as.Date(new_data$date)
+new_data$Week=weekdays(new_data$date)
+for (i in 1:nrow(new_data)){
+ if (new_data$Week[i] %in% c('Saturday','Sunday'))
+{new_data$Week[i]="Weekend"}else
+{new_data$Week[i]="Weekday"}
+}
+library(ggplot2)
+attach(new_data)
+interval=factor(interval)
+weekaverage=aggregate(steps1~interval*Week,data=proj_data,FUN=mean)
+qplot(interval,steps1,data=weekaverage,type='l',facets=Week~.)
+```
