@@ -43,7 +43,7 @@ with(Average,plot.ts(interval,steps,type='l',main="5 minute interval time series
 The five minute interval with the highest number of steps was **`r max[1]`**
 
 ## Imputing missing values
-The missing values were replaced with mean of the data.
+The missing values were replaced with median of the data.
 ```{r fig.width=7,fig.height=6}
 library(zoo)
 #fill missing by median interval
